@@ -1,0 +1,6 @@
+{
+    "terminal.integrated.shellArgs.osx": [],
+    "files.associations": {
+        "cstdio": "cpp"
+    }
+}

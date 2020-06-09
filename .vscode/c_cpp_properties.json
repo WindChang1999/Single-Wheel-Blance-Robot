@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": ["USE_HAL_DRIVER",
+                        "STM32F103xB"],
+            "macFrameworkPath": [],
+            "compilerPath": "/Users/qinjingchang/commandLineTools/gcc-arm-none-eabi-9-2020-q2-update/bin/arm-none-eabi-gcc",
+            "cStandard": "c11",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
