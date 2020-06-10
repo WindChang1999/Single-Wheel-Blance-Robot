@@ -61,7 +61,7 @@ char ssd1306_WriteString(uint8_t x, uint8_t y, char* str, FontDef Font, SSD1306_
 void ssd1306_SetCursor(uint8_t x, uint8_t y);
 
 /* 数字展示的函数 */
-void ssd1306_WriteInt(uint8_t x, uint8_t y, int val);
+void ssd1306_WriteInt(uint8_t x, uint8_t y, int val, uint8_t len);
 void ssd1306_WriteFloat(uint8_t x, uint8_t y, float val, uint8_t len);
 
 

@@ -62,6 +62,12 @@ void Error_Handler(void);
 #define OLED_DC_GPIO_Port GPIOC
 #define OLED_RST_Pin GPIO_PIN_1
 #define OLED_RST_GPIO_Port GPIOC
+#define LD2_Pin GPIO_PIN_5
+#define LD2_GPIO_Port GPIOA
+#define EncoderA_InertiaWheel_Pin GPIO_PIN_6
+#define EncoderA_InertiaWheel_GPIO_Port GPIOA
+#define EncoderB_InertiaWheel_Pin GPIO_PIN_7
+#define EncoderB_InertiaWheel_GPIO_Port GPIOA
 #define OLED_SCL_Pin GPIO_PIN_10
 #define OLED_SCL_GPIO_Port GPIOB
 #define OLED_SDA_Pin GPIO_PIN_11
@@ -78,9 +84,13 @@ void Error_Handler(void);
 #define L298N_IN3_GPIO_Port GPIOC
 #define L298N_IN4_Pin GPIO_PIN_11
 #define L298N_IN4_GPIO_Port GPIOC
-#define MPU_SCL_Pin GPIO_PIN_6
+#define EncoderA_BottomWheel_Pin GPIO_PIN_6
+#define EncoderA_BottomWheel_GPIO_Port GPIOB
+#define EncoderB_BottomWheel_Pin GPIO_PIN_7
+#define EncoderB_BottomWheel_GPIO_Port GPIOB
+#define MPU_SCL_Pin GPIO_PIN_8
 #define MPU_SCL_GPIO_Port GPIOB
-#define MPU_SDA_Pin GPIO_PIN_7
+#define MPU_SDA_Pin GPIO_PIN_9
 #define MPU_SDA_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 

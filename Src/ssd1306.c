@@ -211,10 +211,12 @@ void ssd1306_SetCursor(uint8_t x, uint8_t y)
 
 
 /* 数字展示的函数 */
-void ssd1306_WriteInt(uint8_t x, uint8_t y, int val)
+void ssd1306_WriteInt(uint8_t x, uint8_t y, int val, uint8_t len)
 {
 	char str[20];
-	sprintf(str, "%d", val);
+	char arg[10];
+	sprintf(arg, "%%%dd", len);
+	sprintf(str, arg, val);
 	ssd1306_WriteString(x, y, str, Font_7x10, White);
 }
 
@@ -225,11 +227,9 @@ void ssd1306_WriteFloat(uint8_t x, uint8_t y, float val, uint8_t len)
 	int ip = val;
 	val = val - ip;
 	if(val < 0) val = -val;
-
-	for(; len; len--){
+	for(uint8_t i = 0; i < len; i++){
 		val *= 10;
 	}
-
-	sprintf(str, "%d.%d", ip, (int)val);
+	sprintf(str, "%4d.%d", ip, (int)val);
 	ssd1306_WriteString(x, y, str, Font_7x10, White);
 }
