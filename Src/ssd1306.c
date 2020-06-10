@@ -58,6 +58,7 @@ uint8_t ssd1306_Init(void)
 	ssd1306_WriteCommand(0x8D); //--set DC-DC enable
 	ssd1306_WriteCommand(0x14); //
 	ssd1306_WriteCommand(0xAF); //--turn on SSD1306 panel
+	HAL_Delay(10);
 	
 	// Clear screen
 	ssd1306_Fill(Black);

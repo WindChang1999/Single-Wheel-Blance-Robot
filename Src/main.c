@@ -30,6 +30,7 @@
 #include "mpu6050.h"
 #include "ssd1306.h"
 #include "encoder.h"
+#include "pwm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -117,10 +118,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
   Encoder_Init();
+  PWM_Init();
   ssd1306_Init();
-  HAL_Delay(10);
-  ssd1306_Fill(Black);
-  ssd1306_UpdateScreen();
+
   while (MPU6050_Init(&hi2c1) == 1);
   /* USER CODE END 2 */
 
