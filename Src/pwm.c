@@ -4,7 +4,7 @@
 // Bottom Wheel : L298N_ENA, IN1, IN2
 // Inertia Wheel : L298N_ENB, IN3, IN4
 
-void PWM_Start(WHEEL wheel, int8_t dutyCycle_Init){
+void PWM_Start(WHEEL wheel, float dutyCycle_Init){
     if(wheel == BOTTOM_WHEEL){
         HAL_TIM_PWM_Start(&PWM_TIMER_HANDLE, PWM_BOTTOM_WHEEL_CHANNEL);
     }
@@ -22,9 +22,9 @@ void PWM_Stop(WHEEL wheel){
     }
 }
 
-void PWM_Init(){
-    PWM_Start(BOTTOM_WHEEL, -80);
-    PWM_Start(INERTIA_WHEEL, -80);
+void PWM_Init(float dutyCycle_Init){
+    PWM_Start(BOTTOM_WHEEL, dutyCycle_Init);
+    PWM_Start(INERTIA_WHEEL, dutyCycle_Init);
 }
 
 static void PWM_SetDirection(WHEEL wheel, DIRECTION dir){
@@ -57,7 +57,7 @@ static void PWM_SetDirection(WHEEL wheel, DIRECTION dir){
 }
 
 /* duty cycle > 0 : CW, duty cycle < 0 : CCW */
-void PWM_SetDutyCycle(WHEEL wheel, int8_t dutyCycle){
+void PWM_SetDutyCycle(WHEEL wheel, float dutyCycle){
     if(dutyCycle > PWM_MAX_VALUE){
         dutyCycle = PWM_MAX_VALUE;
     }

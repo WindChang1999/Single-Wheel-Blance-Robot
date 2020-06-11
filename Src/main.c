@@ -70,11 +70,11 @@ void Update_display(){
   ssd1306_WriteFloat(50, 10, MPU6050.KalmanAngleY, 2);
   /* Display encoder */
   ssd1306_WriteString(0, 20, "BEC = ", dataFont, White);
-  ssd1306_WriteInt(50, 20, BottomWheel_EncoderCNT, 5);
-  ssd1306_WriteString(90, 20, (BottomWheel_EncoderDIR ? "DOWN" : "UP  "), dataFont, White);
+  ssd1306_WriteInt(50, 20, Read_Encoder_BottomWheel_Count(), 5);
+  // ssd1306_WriteString(90, 20, (BottomWheel_EncoderDIR ? "DOWN" : "UP  "), dataFont, White);
   ssd1306_WriteString(0, 30, "IEC = ", dataFont, White);
-  ssd1306_WriteInt(50, 30, InertiaWheel_EncoderCNT, 5);
-  ssd1306_WriteString(90, 30, (InertiaWheel_EncoderDIR ? "DOWN" : "UP  "), dataFont, White);
+  ssd1306_WriteInt(50, 30, Read_Encoder_InertiaWheel_Count(), 5);
+  // ssd1306_WriteString(90, 30, (InertiaWheel_EncoderDIR ? "DOWN" : "UP  "), dataFont, White);
   ssd1306_UpdateScreen();
 }
 
@@ -118,7 +118,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
   Encoder_Init();
-  PWM_Init();
+  PWM_Init(80.5);
   ssd1306_Init();
 
   while (MPU6050_Init(&hi2c1) == 1);
@@ -129,8 +129,6 @@ int main(void)
   while (1)
   {
     MPU6050_Read_All(&hi2c1, &MPU6050);
-    Read_Encoder_InertiaWheel();
-    Read_Encoder_BottomWheel();
     Update_display();
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
     HAL_Delay(100);
