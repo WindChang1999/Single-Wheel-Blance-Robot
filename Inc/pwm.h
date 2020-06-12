@@ -15,9 +15,9 @@
 typedef enum { CW, CCW } DIRECTION;
 typedef enum { BOTTOM_WHEEL, INERTIA_WHEEL } WHEEL;
 
-void PWM_Start(WHEEL wheel, int8_t dutyCycle_Init);
+void PWM_Start(WHEEL wheel, float dutyCycle_Init);
 void PWM_Stop(WHEEL wheel);
-void PWM_Init();
+void PWM_Init(float dutyCycle_Init);
 /* duty cycle > 0 : CW, duty cycle < 0 : CCW */
-void PWM_SetDutyCycle(WHEEL wheel, int8_t dutyCycle);
+void PWM_SetDutyCycle(WHEEL wheel, float dutyCycle);
 #endif
