@@ -35,12 +35,14 @@
 #include "stdio.h"
 #include <stdlib.h>
 #include "string.h"
-#define OLED_DEBUG
 #define OLED_DISPALY_KAlMAN
-#define OLED_DISPLAY_ENCODER
+// #define OLED_DISPLAY_ENCODER
 // #define OLED_DISPLAY_PID_PARAMS
 
 #define MAX_RX_BUFFER_SIZE 1024
+#define BLINK_PERIOD       128
+#define OLED_PERIOD        128
+#define SP_PERIOD          128
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,10 +67,13 @@ extern PID InertiaWheel_PID, BottomWheel_PID;
 char RX_Buffer[MAX_RX_BUFFER_SIZE];
 char* RX_pointer = RX_Buffer;
 char currRXChar;
+char PWM_OUTPUT_ENABLE = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void Print_Params();
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -93,12 +98,16 @@ void Update_display(){
   ssd1306_WriteInt(50, 30, Read_Encoder_InertiaWheel_Count(), 5);
   #endif
   #ifdef OLED_DISPLAY_PID_PARAMS
-  ssd1306_WriteString(0, 0, "BWP = ", dataFont, White); ssd1306_WriteFloat(70, 0, BottomWheel_PID.Kp, 2);
-  ssd1306_WriteString(0, 10, "BWI = ", dataFont, White); ssd1306_WriteFloat(70, 10, BottomWheel_PID.Ki, 2);
-  ssd1306_WriteString(0, 20, "BWD = ", dataFont, White); ssd1306_WriteFloat(70, 20, BottomWheel_PID.Kd, 2);
+  #ifdef BW_ANGLE_LOOP_ENABLE
+  ssd1306_WriteString(0, 0, "BWP = ", dataFont, White); ssd1306_WriteFloat(70, 0, BottomWheel_Speed_LOOP_PID.Kp, 2);
+  ssd1306_WriteString(0, 10, "BWI = ", dataFont, White); ssd1306_WriteFloat(70, 10, BottomWheel_Speed_LOOP_PID.Ki, 2);
+  ssd1306_WriteString(0, 20, "BWD = ", dataFont, White); ssd1306_WriteFloat(70, 20, BottomWheel_Speed_LOOP_PID.Kd, 2);
+  #endif
+  #ifdef IW_ANGLE_LOOP_ENABLE
   ssd1306_WriteString(0, 30, "IWP = ", dataFont, White); ssd1306_WriteFloat(70, 30, InertiaWheel_PID.Kp, 2);
   ssd1306_WriteString(0, 40, "IWI = ", dataFont, White); ssd1306_WriteFloat(70, 40, InertiaWheel_PID.Ki, 2);
   ssd1306_WriteString(0, 50, "IWD = ", dataFont, White); ssd1306_WriteFloat(70, 50, InertiaWheel_PID.Kd, 2);
+  #endif
   #endif
   ssd1306_UpdateScreen();
 }
@@ -140,28 +149,35 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-  Encoder_Init();
-  PWM_Init(80.5);
-  ssd1306_Init();
-  PID_Init();
-  HAL_TIM_Base_Start_IT(&htim2);
-  HAL_UART_Receive_IT(&huart2, (uint8_t *) &currRXChar, 1);     // 开启接收中断
   while (MPU6050_Init(&hi2c1) == 1);
+  HAL_Delay(500);
+  // PWM_Init(0);
+  Encoder_Init();
+  ssd1306_Init();
+  HAL_Delay(500);
+
+  HAL_TIM_Base_Start_IT(&htim2);    // 开启定时器2中断: PID 控制, I2C 读取
+  HAL_UART_Receive_IT(&huart2, (uint8_t *) &currRXChar, 1);     // 开启接收中断
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    #ifdef OLED_DEBUG
-
-    #endif
     /* USER CODE END WHILE */
-    // MPU6050_Read_All(&hi2c1, &MPU6050);
-    // Update_display();
-    // HAL_Delay(100);
     /* USER CODE BEGIN 3 */
+    // uint8_t val = MPU_CNT % MPU_PERIOD;
+    // if(val == 0){
+    //   MPU6050_Read_All(&hi2c1, &MPU6050);
+    // }
+    // if(OLED_CNT % 40 == 0){
+    //   Update_display();
+    // }
+    // if(SP_CNT % 40 == 0){
+    //   // if(PWM_OUTPUT_ENABLE){
+    //     Print_Params();
+    //   // }
+    // }
   }
   /* USER CODE END 3 */
 }
@@ -219,11 +235,33 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   /* Prevent unused argument(s) compilation warning */
   UNUSED(huart);
   static WHEEL Setting_Wheel;
+  static char LOOP;
   if(currRXChar == 'B'){
     Setting_Wheel = BOTTOM_WHEEL;
   }
   else if(currRXChar == 'I'){
     Setting_Wheel = INERTIA_WHEEL;
+  }
+  else if(currRXChar == 'A'){
+    if(Setting_Wheel == BOTTOM_WHEEL){
+      LOOP = 'A';   // 设置角度环
+    }
+  }
+  else if(currRXChar == 'S'){
+    if(Setting_Wheel == BOTTOM_WHEEL){
+      LOOP = 'S';   // 设置角度环
+    }
+  }
+  else if(currRXChar == 'G'){         // GO !
+    PWM_OUTPUT_ENABLE = 1;
+    PWM_Init(0);
+    HAL_UART_Transmit(&huart2, (uint8_t*) "START\n", 6, 200);
+  } 
+  else if(currRXChar == 'P'){         // PAUSE !
+    PWM_OUTPUT_ENABLE = 0;
+    PWM_DeInit();
+    HAL_UART_Transmit(&huart2, (uint8_t*) "STOP\n", 6, 200);
+    PID_TopLevel();   // 清零
   }
   else{
     *(RX_pointer++) = currRXChar;
@@ -233,6 +271,16 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
       uint8_t i = 0;
       for(char* p = RX_Buffer + 1; *p != '*'; p++){
         if(*p == ' '){
+          i++;
+          if(state == 0){
+            Kp[i] = '\0';
+          }
+          if(state == 1){
+            Ki[i] = '\0';
+          }
+          if(state == 2){
+            Kd[i] = '\0';
+          }
           i = 0;
           state++;
           continue;
@@ -249,16 +297,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
       }
       HAL_UART_Transmit(&huart2, (uint8_t*) "OK\n", 4, 200);
       if(Setting_Wheel == BOTTOM_WHEEL){
-        // sscanf(RX_Buffer, "%f %f %f", &BottomWheel_PID.Kp, &BottomWheel_PID.Ki, &BottomWheel_PID.Kd);
-        BottomWheel_PID.Kp = atof(Kp);
-        BottomWheel_PID.Ki = atof(Ki);
-        BottomWheel_PID.Kd = atof(Kd);
+        Set_BottomWheel_PID_Params(atof(Kp), atof(Ki), atof(Kd), LOOP);
       }
       if(Setting_Wheel == INERTIA_WHEEL){
-        // sscanf(RX_Buffer, "%f %f %f", &InertiaWheel_PID.Kp, &InertiaWheel_PID.Ki, &InertiaWheel_PID.Kd);
-        InertiaWheel_PID.Kp = atof(Kp);
-        InertiaWheel_PID.Ki = atof(Ki);
-        InertiaWheel_PID.Kd = atof(Kd);
+        Set_InertiaWheel_PID_Params(atof(Kp), atof(Ki), atof(Kd));
       }
       RX_pointer = RX_Buffer;
     }
@@ -287,9 +329,9 @@ static void Print_Params(){
   static uint16_t PID_NUM = 1;
   sprintf(intStr, "%d", PID_NUM);
   SendString(intStr, " ");
-  sprintf(intStr, "%d", Read_Encoder_BottomWheel_Count());
+  sprintf(intStr, "%ld", Read_Encoder_BottomWheel_Count());
   SendString(intStr, " ");
-  sprintf(intStr, "%d", Read_Encoder_InertiaWheel_Count());
+  sprintf(intStr, "%ld", Read_Encoder_InertiaWheel_Count());
   SendString(intStr, " ");
 
   // sprintf(intStr, "%d", (int) MPU6050.KalmanAngleX);
@@ -307,25 +349,41 @@ static void Print_Params(){
   PID_NUM++;
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)     // TIM2 溢出周期为 1ms
 {
   /* Prevent unused argument(s) compilation warning */
+  static uint8_t BLINK_CNT = 0;
+  static uint8_t BW_ANGLE_PID_CNT = 10;
+  // static uint8_t IW_ANGLE_PID_CNT = 2;
+  static uint8_t MPU_CNT = 32;
+  static uint8_t OLED_CNT = 64;
+  static uint8_t SP_CNT = 96;
   UNUSED(htim);
-  static uint16_t BlinkCount = 0;
-  static uint16_t PID_COUNT = 0;
-  
-  if(BlinkCount == 100){
+  if(!BLINK_CNT){
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-    BlinkCount = 0;
   }
-  if(PID_COUNT == 100){
+  if(!BW_ANGLE_PID_CNT){
+    if(PWM_OUTPUT_ENABLE){
+      PID_TopLevel();
+    }
+  }
+  if(!MPU_CNT){
     MPU6050_Read_All(&hi2c1, &MPU6050);
-    Update_display();
-    Print_Params();
-    PID_COUNT = 0;
   }
-  BlinkCount++;
-  PID_COUNT++;
+  if(!OLED_CNT){
+    Update_display();
+  }
+  if(!SP_CNT){
+    // if(PWM_OUTPUT_ENABLE){
+      Print_Params();
+    // }
+  }
+  BLINK_CNT = (BLINK_CNT + 1) % BLINK_PERIOD;
+  BW_ANGLE_PID_CNT = (BW_ANGLE_PID_CNT + 1) % BW_PID_PERIOD;
+  // IW_ANGLE_PID_CNT = (IW_ANGLE_PID_CNT + 1) % IW_PID_PERIOD;
+  MPU_CNT = (MPU_CNT + 1) % MPU_PERIOD;
+  OLED_CNT = (OLED_CNT + 1) % OLED_PERIOD;
+  SP_CNT = (SP_CNT + 1) % SP_PERIOD;
 }
 /* USER CODE END 4 */
 
@@ -359,3 +417,4 @@ void assert_failed(uint8_t *file, uint32_t line)
 #endif /* USE_FULL_ASSERT */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+// 

@@ -4,6 +4,8 @@
 // Bottom Wheel : L298N_ENA, IN1, IN2
 // Inertia Wheel : L298N_ENB, IN3, IN4
 
+// CCW -> UP  ->  ENCODER = 负数
+// CW  -> DOWN  ->  ENCODER = 正数
 void PWM_Start(WHEEL wheel, float dutyCycle_Init){
     if(wheel == BOTTOM_WHEEL){
         HAL_TIM_PWM_Start(&PWM_TIMER_HANDLE, PWM_BOTTOM_WHEEL_CHANNEL);
@@ -27,6 +29,10 @@ void PWM_Init(float dutyCycle_Init){
     PWM_Start(INERTIA_WHEEL, dutyCycle_Init);
 }
 
+void PWM_DeInit(){
+    PWM_Stop(BOTTOM_WHEEL);
+    PWM_Stop(INERTIA_WHEEL);
+}
 static void PWM_SetDirection(WHEEL wheel, DIRECTION dir){
     switch (wheel){
     case BOTTOM_WHEEL:

@@ -9,7 +9,7 @@
 #define PWM_INERTIA_WHEEL_CHANNEL   TIM_CHANNEL_2
 #define PWM_MAX_VALUE               100
 #define PWM_MIN_VALUE               -100
-#define PWM_PERIOD                  12800
+#define PWM_PERIOD                  12799
 #define PWM_CLOCK                   64000000
 
 typedef enum { CW, CCW } DIRECTION;
@@ -18,6 +18,7 @@ typedef enum { BOTTOM_WHEEL, INERTIA_WHEEL } WHEEL;
 void PWM_Start(WHEEL wheel, float dutyCycle_Init);
 void PWM_Stop(WHEEL wheel);
 void PWM_Init(float dutyCycle_Init);
+void PWM_DeInit();
 /* duty cycle > 0 : CW, duty cycle < 0 : CCW */
 void PWM_SetDutyCycle(WHEEL wheel, float dutyCycle);
 #endif

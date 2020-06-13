@@ -7,7 +7,7 @@
 
 #ifndef INC_GY521_H_
 #define INC_GY521_H_
-
+#define MPU_PERIOD 20
 
 
 #include <stdint.h>

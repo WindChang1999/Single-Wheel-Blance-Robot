@@ -231,6 +231,6 @@ void ssd1306_WriteFloat(uint8_t x, uint8_t y, float val, uint8_t len)
 	for(uint8_t i = 0; i < len; i++){
 		val *= 10;
 	}
-	sprintf(str, "%4d.%d", ip, (int)val);
+	sprintf(str, "%3d.%d", ip, (int)val);
 	ssd1306_WriteString(x, y, str, Font_7x10, White);
 }
