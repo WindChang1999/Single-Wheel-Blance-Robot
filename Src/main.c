@@ -32,11 +32,13 @@
 #include "encoder.h"
 #include "pwm.h"
 #include "PID.h"
+#include "stdio.h"
 #include <stdlib.h>
+#include "string.h"
 #define OLED_DEBUG
-// #define OLED_DISPALY_KAlMAN
-// #define OLED_DISPLAY_ENCODER
-#define OLED_DISPLAY_PID_PARAMS
+#define OLED_DISPALY_KAlMAN
+#define OLED_DISPLAY_ENCODER
+// #define OLED_DISPLAY_PID_PARAMS
 
 #define MAX_RX_BUFFER_SIZE 1024
 /* USER CODE END Includes */
@@ -156,9 +158,9 @@ int main(void)
 
     #endif
     /* USER CODE END WHILE */
-    MPU6050_Read_All(&hi2c1, &MPU6050);
-    Update_display();
-    HAL_Delay(100);
+    // MPU6050_Read_All(&hi2c1, &MPU6050);
+    // Update_display();
+    // HAL_Delay(100);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -226,7 +228,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   else{
     *(RX_pointer++) = currRXChar;
     if(currRXChar == '*'){
-      char Kp[1024], Ki[1024], Kd[1024];
+      char Kp[100], Ki[100], Kd[100];
       uint8_t state = 0;
       uint8_t i = 0;
       for(char* p = RX_Buffer + 1; *p != '*'; p++){
@@ -245,7 +247,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
           Kd[i++] = *p;
         }
       }
-      HAL_UART_Transmit(&huart2, (uint8_t*) "OK", 3, 200);
+      HAL_UART_Transmit(&huart2, (uint8_t*) "OK\n", 4, 200);
       if(Setting_Wheel == BOTTOM_WHEEL){
         // sscanf(RX_Buffer, "%f %f %f", &BottomWheel_PID.Kp, &BottomWheel_PID.Ki, &BottomWheel_PID.Kd);
         BottomWheel_PID.Kp = atof(Kp);
@@ -264,16 +266,66 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   HAL_UART_Receive_IT(&huart2, (uint8_t *) &currRXChar, 1);
 }
 
+static void SendString(char* str, const char* end){
+  HAL_UART_Transmit(&huart2, (uint8_t*) str, strlen(str), 50);
+  if(*end){
+    HAL_UART_Transmit(&huart2, (uint8_t*) end, 1, 50);
+  }
+}
+
+static void floatTo2Int(float val, int* ip, int* fp){
+	*ip = val;
+	val = val - *ip;
+	if(val < 0) val = -val;
+  val = val*100;
+  *fp = val;
+}
+
+static void Print_Params(){
+  char intStr[100], floatStr[100];
+  int ipart, fpart;
+  static uint16_t PID_NUM = 1;
+  sprintf(intStr, "%d", PID_NUM);
+  SendString(intStr, " ");
+  sprintf(intStr, "%d", Read_Encoder_BottomWheel_Count());
+  SendString(intStr, " ");
+  sprintf(intStr, "%d", Read_Encoder_InertiaWheel_Count());
+  SendString(intStr, " ");
+
+  // sprintf(intStr, "%d", (int) MPU6050.KalmanAngleX);
+  // SendString(intStr, " ");
+  // sprintf(intStr, "%d", (int) MPU6050.KalmanAngleY);
+  // SendString(intStr, "\n");
+
+
+  floatTo2Int(MPU6050.KalmanAngleX, &ipart, &fpart);
+  sprintf(floatStr, "%d.%d", ipart, fpart);
+  SendString(floatStr, " ");
+  floatTo2Int(MPU6050.KalmanAngleY, &ipart, &fpart);
+  sprintf(floatStr, "%d.%d", ipart, fpart);
+  SendString(floatStr, "\n");
+  PID_NUM++;
+}
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* Prevent unused argument(s) compilation warning */
   UNUSED(htim);
   static uint16_t BlinkCount = 0;
+  static uint16_t PID_COUNT = 0;
+  
   if(BlinkCount == 100){
     HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
     BlinkCount = 0;
   }
+  if(PID_COUNT == 100){
+    MPU6050_Read_All(&hi2c1, &MPU6050);
+    Update_display();
+    Print_Params();
+    PID_COUNT = 0;
+  }
   BlinkCount++;
+  PID_COUNT++;
 }
 /* USER CODE END 4 */
 
